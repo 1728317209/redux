@@ -16,7 +16,13 @@ import compose from './compose'
  * @param {...Function} middlewares The middleware chain to be applied.
  * @returns {Function} A store enhancer applying the middleware.
  */
+
+// [middleware 源码解读](https://note.youdao.com/s/8U6AbQpv)
 export default function applyMiddleware(...middlewares) {
+  /**
+   * applyMiddleware 返回的这个方法，作为 enhancer 在 [createStore.js](https://github.com/1728317209/redux/blob/ys/feature-read-code/src/createStore.js#L42) 中调用 `enhancer(createStore)(reducer, preloadedState)`  
+   * createStore 就是 [createStore.js](https://github.com/1728317209/redux/blob/ys/feature-read-code/src/createStore.js#L42) 中的 createStore 方法
+   */
   return createStore => (...args) => {
     const store = createStore(...args)
     let dispatch = () => {
@@ -31,8 +37,10 @@ export default function applyMiddleware(...middlewares) {
       dispatch: (...args) => dispatch(...args)
     }
     const chain = middlewares.map(middleware => middleware(middlewareAPI))
+    // 用 middlewares 封装 store.dispatch 生成一个新的 store.dispatch
     dispatch = compose(...chain)(store.dispatch)
 
+    // 强化 store 其实就是**用封装后的 dispatch 替换原来的 dispatch**
     return {
       ...store,
       dispatch
