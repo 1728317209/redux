@@ -29,6 +29,7 @@ import isPlainObject from './utils/isPlainObject'
  * and subscribe to changes.
  */
 export default function createStore(reducer, preloadedState, enhancer) {
+  // 如果第二个参数是方法 没有第三个参数，说明第二个参数是 enhancer
   if (typeof preloadedState === 'function' && typeof enhancer === 'undefined') {
     enhancer = preloadedState
     preloadedState = undefined
@@ -38,7 +39,7 @@ export default function createStore(reducer, preloadedState, enhancer) {
     if (typeof enhancer !== 'function') {
       throw new Error('Expected the enhancer to be a function.')
     }
-
+    // 如果有 enhancer 就走这里，再次调用 createStore
     return enhancer(createStore)(reducer, preloadedState)
   }
 
@@ -98,6 +99,7 @@ export default function createStore(reducer, preloadedState, enhancer) {
    * @param {Function} listener A callback to be invoked on every dispatch.
    * @returns {Function} A function to remove this change listener.
    */
+  // 在 react 的项目中，使用 react-redux 的 connect 方法，connect(mapStateToProps, mapDispatchToProps)(component), 如果有 mapStateToProps 则 component 就 subscribe 监听 state 变化
   function subscribe(listener) {
     if (typeof listener !== 'function') {
       throw new Error('Expected the listener to be a function.')
@@ -115,9 +117,11 @@ export default function createStore(reducer, preloadedState, enhancer) {
     let isSubscribed = true
 
     ensureCanMutateNextListeners()
-    nextListeners.push(listener)
+    nextListeners.push(listener) // 添加 listener
 
+    // 返回一个取消监听的方法
     return function unsubscribe() {
+      // 只取消一次，闭包
       if (!isSubscribed) {
         return
       }
@@ -132,7 +136,7 @@ export default function createStore(reducer, preloadedState, enhancer) {
       isSubscribed = false
 
       ensureCanMutateNextListeners()
-      const index = nextListeners.indexOf(listener)
+      const index = nextListeners.indexOf(listener) // 删除 listener
       nextListeners.splice(index, 1)
     }
   }
@@ -183,23 +187,26 @@ export default function createStore(reducer, preloadedState, enhancer) {
 
     try {
       isDispatching = true
-      currentState = currentReducer(currentState, action)
+      // state 是直接替换的
+      currentState = currentReducer(currentState, action) // 执行 reducer 更新 state
     } finally {
       isDispatching = false
     }
 
     const listeners = (currentListeners = nextListeners)
+    // 遍历执行所有 listener
     for (let i = 0; i < listeners.length; i++) {
       const listener = listeners[i]
       listener()
     }
 
+    // dispatch 返回传入的 action
     return action
   }
 
   /**
    * Replaces the reducer currently used by the store to calculate the state.
-   *
+   * 代码分割、动态加载 可能会用到 replaceReducer
    * You might need this if your app implements code splitting and you want to
    * load some of the reducers dynamically. You might also need this if you
    * implement a hot reloading mechanism for Redux.
