@@ -9,6 +9,7 @@ import webpackHotMiddleware from 'webpack-hot-middleware'
 import webpackConfig from '../webpack.config'
 
 import React from 'react'
+// 服务端渲染要用到 renderToString
 import { renderToString } from 'react-dom/server'
 import { Provider } from 'react-redux'
 
@@ -27,9 +28,11 @@ app.use(webpackHotMiddleware(compiler))
 const handleRender = (req, res) => {
   // Query our mock API asynchronously
   fetchCounter(apiResult => {
+    console.log('handleRender -> apiResult', apiResult)
     // Read the counter from the request, if provided
     const params = qs.parse(req.query)
     const counter = parseInt(params.counter, 10) || apiResult || 0
+    console.log('handleRender -> counter', counter)
 
     // Compile an initial state
     const preloadedState = { counter }
@@ -48,7 +51,10 @@ const handleRender = (req, res) => {
     const finalState = store.getState()
 
     // Send the rendered page back to the client
-    res.send(renderFullPage(html, finalState))
+    console.log('handleRender -> html', html)
+    const fullPage = renderFullPage(html, finalState);
+    console.log('handleRender -> fullPage', fullPage)
+    res.send(fullPage)
   })
 }
 
