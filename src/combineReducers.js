@@ -118,6 +118,7 @@ function assertReducerShape(reducers) {
 export default function combineReducers(reducers) {
   const reducerKeys = Object.keys(reducers)
   const finalReducers = {}
+  // 过滤掉不合法的 reducer
   for (let i = 0; i < reducerKeys.length; i++) {
     const key = reducerKeys[i]
 
@@ -164,18 +165,25 @@ export default function combineReducers(reducers) {
 
     let hasChanged = false
     const nextState = {}
+    // 遍历执行所有 reducer
     for (let i = 0; i < finalReducerKeys.length; i++) {
       const key = finalReducerKeys[i]
       const reducer = finalReducers[key]
       const previousStateForKey = state[key]
+      // 执行 reducer 获取新的 state
       const nextStateForKey = reducer(previousStateForKey, action)
       if (typeof nextStateForKey === 'undefined') {
         const errorMessage = getUndefinedStateErrorMessage(key, action)
         throw new Error(errorMessage)
       }
+      // 更新 nextState
       nextState[key] = nextStateForKey
-      hasChanged = hasChanged || nextStateForKey !== previousStateForKey
+      // hasChanged = hasChanged || nextStateForKey !== previousStateForKey
+      if (!hasChanged) {
+        hasChanged = nextStateForKey !== previousStateForKey
+      }
     }
+    // 如果 state 没有改变，返回原来的 state
     return hasChanged ? nextState : state
   }
 }
